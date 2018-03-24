@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Common Tools"/>
+	<classpathentry kind="lib" path="/Common Tools/lib/jinput.jar"/>
+	<classpathentry kind="lib" path="/Common Tools/lib/jogg-0.0.7.jar"/>
+	<classpathentry kind="lib" path="/Common Tools/lib/jorbis-0.0.15.jar"/>
+	<classpathentry kind="lib" path="/Common Tools/lib/slick-util.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
