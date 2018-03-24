@@ -100,7 +100,7 @@ public class Network {
 		this.game = game;
 		if (port == -1)
 			try {
-				port = Integer.parseInt(Tools.readResourceFile("/ip/serverIP.txt").get(0));
+				port = Integer.parseInt(Tools.readResourceFile(Network.class, "/ip/serverPort.txt").get(0));
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -149,7 +149,7 @@ public class Network {
 				// Could throw an Exception if a Client is added/removed while
 				// running this. Just ignore it, next tick will correct it.
 			}
-			if (server.getConnectedClientAmt() > 0 
+			if (server.getConnectedClientAmt() > 0
 					&& game.currentTimeMillis() - toldClientsInfoTime >= tellClientsInfoDelay) {
 				game.logger.log(LogLevel.DEBUG, "It's been a while, sending clients server info.");
 				toldClientsInfoTime = game.currentTimeMillis();

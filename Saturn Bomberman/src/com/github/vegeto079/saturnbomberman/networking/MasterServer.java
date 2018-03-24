@@ -32,7 +32,7 @@ import com.github.vegeto079.ngcommontools.networking.Server.ServerMessageHandler
  *          to determine who we are trying to connect with. Now has a few
  *          catches to make sure we don't get stuck with this enabled.
  * @see {@link MasterServerConnector}
- *  
+ * 
  */
 public class MasterServer extends Game {
 	private static final long serialVersionUID = 1;
@@ -42,7 +42,7 @@ public class MasterServer extends Game {
 		super(logger, args, ticksPerSecond, paintTicksPerSecond, title, width, height);
 		if (port == -1)
 			try {
-				port = Integer.parseInt(Tools.readResourceFile("/ip/serverIP.txt").get(0));
+				port = Integer.parseInt(Tools.readResourceFile(MasterServer.class, "/ip/serverIP.txt").get(0));
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
