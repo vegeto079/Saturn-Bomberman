@@ -42,7 +42,7 @@ public class MasterServer extends Game {
 		super(logger, args, ticksPerSecond, paintTicksPerSecond, title, width, height);
 		if (port == -1)
 			try {
-				port = Integer.parseInt(Tools.readResourceFile("/ip/serverIP.txt").get(0));
+				port = Integer.parseInt(Tools.readResourceFile("/ip/serverPort.txt").get(0) + 1);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}

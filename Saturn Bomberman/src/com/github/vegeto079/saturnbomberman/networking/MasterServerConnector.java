@@ -113,7 +113,7 @@ public class MasterServerConnector {
 			}
 		if (port == -1)
 			try {
-				port = Integer.parseInt(Tools.readResourceFile("/ip/serverPort.txt").get(0));
+				port = Integer.parseInt(Tools.readResourceFile("/ip/serverPort.txt").get(0) + 1);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
