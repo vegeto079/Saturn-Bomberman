@@ -107,13 +107,13 @@ public class MasterServerConnector {
 	public MasterServerConnector() {
 		if (ip == null)
 			try {
-				ip = Tools.readResourceFile(MasterServerConnector.class, "/ip/serverIP.txt").get(0);
+				ip = Tools.readResourceFile("/ip/serverIP.txt").get(0);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
 		if (port == -1)
 			try {
-				port = Integer.parseInt(Tools.readResourceFile(MasterServerConnector.class, "/ip/serverPort.txt").get(0));
+				port = Integer.parseInt(Tools.readResourceFile("/ip/serverPort.txt").get(0));
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}

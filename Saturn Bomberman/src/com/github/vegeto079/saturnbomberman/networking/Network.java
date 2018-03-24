@@ -100,7 +100,7 @@ public class Network {
 		this.game = game;
 		if (port == -1)
 			try {
-				port = Integer.parseInt(Tools.readResourceFile(Network.class, "/ip/serverPort.txt").get(0));
+				port = Integer.parseInt(Tools.readResourceFile("/ip/serverPort.txt").get(0));
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
