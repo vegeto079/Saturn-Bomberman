@@ -5055,7 +5055,7 @@ public class MainBomberman extends Game {
 				theDebug[i] = debug.get(i);
 			draw.debug(g, defaultFont, theDebug);
 		}
-		if (players != null && debug) // TODO make look better
+		if (players != null && debug)
 			for (int i = 0; i < players.size(); i++)
 				if (players.get(i).ai != null)
 					players.get(i).ai.drawReachableLocations(g);
@@ -5456,7 +5456,7 @@ public class MainBomberman extends Game {
 		} else if (keyCode == KeyEvent.VK_F12) {
 			// if (!network.isPlayingOnline() && debug)
 			// System.exit(0);
-			// TODO: goto benchmarking
+			// TODO: goto benchmarking?
 			benchmarkStatus = 0;
 			ticksPerSecond = 60;
 			paintTicksPerSecond = 1000;

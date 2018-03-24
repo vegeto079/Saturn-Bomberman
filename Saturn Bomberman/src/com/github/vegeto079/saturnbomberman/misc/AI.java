@@ -18,7 +18,6 @@ import com.github.vegeto079.saturnbomberman.main.Stage;
 import com.github.vegeto079.saturnbomberman.objects.Bomb;
 import com.github.vegeto079.saturnbomberman.objects.Player;
 
-
 /**
  * We currently count ourselves as something we should blow up. This could be
  * fixed later, but right now counting everyone as an equal player is simpler.
@@ -66,11 +65,10 @@ public class AI {
 	private long keepMovingToBombUntil = -1;
 	private long disableSafeMovingUntil = -1;
 
-	public static AIStar.Settings aStarDefaultSettings = new AIStar.Settings(100000,
-			false, false, false, true, true, 100000, 1, .01f, 1000, new Logger(true));
-	public static AIStar.Settings aStarReachableLocationsSettings = new AIStar.Settings(
-			100000, false, true, false, true, true, 100000, 1, .01f, 1000,
-			new Logger(true));
+	public static AIStar.Settings aStarDefaultSettings = new AIStar.Settings(100000, false, false, false, true, true,
+			100000, 1, .01f, 1000, new Logger(true));
+	public static AIStar.Settings aStarReachableLocationsSettings = new AIStar.Settings(100000, false, true, false,
+			true, true, 100000, 1, .01f, 1000, new Logger(true));
 	private boolean[][] reachableLocations;
 	private long[][] reachableExplodableTiles;
 	private boolean placingBomb = false;
@@ -89,20 +87,19 @@ public class AI {
 	int directionToPress = -1;
 
 	/**
-	 * Whether or not the AI will think ahead of time and move to the next spot
-	 * they want to place the bomb, rather than just staying safe until they can
-	 * place another.<br>
+	 * Whether or not the AI will think ahead of time and move to the next spot they
+	 * want to place the bomb, rather than just staying safe until they can place
+	 * another.<br>
 	 * <b>true</b>: More aggressive and sets self up for death.<br>
 	 * <b>false</b>: Plays it safe more often.
 	 */
 	public boolean walkToBombPointProactively = false;
 	/**
-	 * How many points a player kill is worth to this AI. The higher this
-	 * number, the more likely the AI is to hunt down players.<br>
-	 * <b>At zero</b>: Makes no attempt to kill players, only destroys blocks.
-	 * <br>
-	 * <b>At one</b>: Players are essentially one block, will go for kills but
-	 * not any more than blocks.<br>
+	 * How many points a player kill is worth to this AI. The higher this number,
+	 * the more likely the AI is to hunt down players.<br>
+	 * <b>At zero</b>: Makes no attempt to kill players, only destroys blocks. <br>
+	 * <b>At one</b>: Players are essentially one block, will go for kills but not
+	 * any more than blocks.<br>
 	 * <b>Higher</b>: More aggressive player-killing AI.
 	 */
 	public int playerHunterLevel = 2;
@@ -122,8 +119,8 @@ public class AI {
 	 * This value affects the ai's viewpoint of distance.<br>
 	 * This number represents the amount of tiles away something is before it's
 	 * considered 'far away'.<br>
-	 * Therefore, the larger this number, the more this person will possibly go
-	 * far away to do something.<br>
+	 * Therefore, the larger this number, the more this person will possibly go far
+	 * away to do something.<br>
 	 * By default, this is 3.
 	 */
 	public int distanceModifier = 3;
@@ -133,29 +130,28 @@ public class AI {
 	 * If your computer can handle it, this can be set to 1ms. Otherwise you may
 	 * want to raise it to 10, or even 100 if you experience a lot of slowdowns.
 	 * <br>
-	 * The higher this is, the worse the ai will be as it won't respond fast.
-	 * <br>
+	 * The higher this is, the worse the ai will be as it won't respond fast. <br>
 	 * Default is 10, which is fine.
 	 */
 	public long reactionTime = 10;
 	/**
-	 * This value represents whether or not the ai will try to trap players in
-	 * with bombs. This will cause the level of the ai to jump, as it's more
-	 * like "thinking ahead".
+	 * This value represents whether or not the ai will try to trap players in with
+	 * bombs. This will cause the level of the ai to jump, as it's more like
+	 * "thinking ahead".
 	 */
 	public boolean trapEnemies = true;
 	/**
-	 * This value changes the amount of time the ai uses to determine if a spot
-	 * is walk-through-able. Lower values is a cockier AI.<br>
+	 * This value changes the amount of time the ai uses to determine if a spot is
+	 * walk-through-able. Lower values is a cockier AI.<br>
 	 * <b>1.0</b> is default, with the danger-spread being from 700-1500ms.<br>
 	 * <b>0.5</b> is half at 350-750ms.
 	 */
 	public float walkingThroughFireMultiplier = 1.0f;
 	/**
-	 * This value represents if the ai will try to kick a bomb if it means
-	 * getting themselves out of a trapped situation. This should always be
-	 * <b>true</b> if you want an AI that utilizes the kickbomb defensively on
-	 * purpose. Otherwise they will just accept defeat and let themselves die.
+	 * This value represents if the ai will try to kick a bomb if it means getting
+	 * themselves out of a trapped situation. This should always be <b>true</b> if
+	 * you want an AI that utilizes the kickbomb defensively on purpose. Otherwise
+	 * they will just accept defeat and let themselves die.
 	 */
 	public boolean kickBombsToStayAlive = true;
 
@@ -182,43 +178,36 @@ public class AI {
 			distanceModifier = 5;
 			reactionTime = Tools.random(game, 800, 1200, "Random AI reaction time");
 			trapEnemies = false;
-			walkingThroughFireMultiplier = (float) Tools.random(game, 1, 3,
-					"Random AI walkthrough multiplier") * 0.1f;
+			walkingThroughFireMultiplier = (float) Tools.random(game, 1, 3, "Random AI walkthrough multiplier") * 0.1f;
 			kickBombsToStayAlive = false;
 		} else if (level == 2) {
 			playerHunterLevel = Tools.random(game, 1, 3, "Random AI hunter level");
-			walkToBombPointProactively = Tools.random(game, 100,
-					"Random AI walk to bomb proactively") > 50;
+			walkToBombPointProactively = Tools.random(game, 100, "Random AI walk to bomb proactively") > 50;
 			// speedRatio = Tools.random(game, 60, 80, "Random AI speed ratio");
 			distanceModifier = Tools.random(game, 2, 4, "Random AI distance modifier");
 			reactionTime = Tools.random(game, 350, 900, "Random AI reaction time");
 			trapEnemies = false;
-			walkingThroughFireMultiplier = (float) Tools.random(game, 3, 5,
-					"Random AI walkthrough multiplier") * 0.1f;
+			walkingThroughFireMultiplier = (float) Tools.random(game, 3, 5, "Random AI walkthrough multiplier") * 0.1f;
 			kickBombsToStayAlive = false;
 		} else if (level == 3) {
 			playerHunterLevel = Tools.random(game, 1, 8, "Random AI hunter level");
-			walkToBombPointProactively = Tools.random(game, 100,
-					"Random AI walk to bomb proactively") > 50;
+			walkToBombPointProactively = Tools.random(game, 100, "Random AI walk to bomb proactively") > 50;
 			// speedRatio = Tools.random(game, 90, 110, "Random AI speed
 			// ratio");
 			distanceModifier = Tools.random(game, 4, 8, "Random AI distance modifier");
 			reactionTime = Tools.random(game, 50, 100, "Random AI reaction time");
 			trapEnemies = true;
-			walkingThroughFireMultiplier = (float) Tools.random(game, 5, 7,
-					"Random AI walkthrough multiplier") * 0.1f;
+			walkingThroughFireMultiplier = (float) Tools.random(game, 5, 7, "Random AI walkthrough multiplier") * 0.1f;
 			kickBombsToStayAlive = true;
 		} else if (level == 4) {
 			playerHunterLevel = Tools.random(game, 1, 10, "Random AI hunter level");
-			walkToBombPointProactively = Tools.random(game, 100,
-					"Random AI walk to bomb proactively") > 80;
+			walkToBombPointProactively = Tools.random(game, 100, "Random AI walk to bomb proactively") > 80;
 			// speedRatio = Tools.random(game, 125, 150, "Random AI speed
 			// ratio");
 			distanceModifier = Tools.random(game, 5, 10, "Random AI distance modifier");
 			reactionTime = Tools.random(game, 50, 100, "Random AI reaction time");
 			trapEnemies = true;
-			walkingThroughFireMultiplier = (float) Tools.random(game, 7, 10,
-					"Random AI walkthrough multiplier") * 0.1f;
+			walkingThroughFireMultiplier = (float) Tools.random(game, 7, 10, "Random AI walkthrough multiplier") * 0.1f;
 			kickBombsToStayAlive = true;
 		} else if (level == 5) {
 			playerHunterLevel = Tools.random(game, 1, 3, "Random AI hunter level");
@@ -228,8 +217,7 @@ public class AI {
 			distanceModifier = Tools.random(game, 8, 12, "Random AI distance modifier");
 			reactionTime = Tools.random(game, 1, 5, "Random AI reaction time");
 			trapEnemies = true;
-			walkingThroughFireMultiplier = (float) Tools.random(game, 7, 10,
-					"Random AI walkthrough multiplier") * 0.1f;
+			walkingThroughFireMultiplier = (float) Tools.random(game, 7, 10, "Random AI walkthrough multiplier") * 0.1f;
 			kickBombsToStayAlive = true;
 		} else if (level == 6) {
 			// They're terminators, the best I can do.
@@ -239,8 +227,7 @@ public class AI {
 			distanceModifier = 100;
 			reactionTime = Tools.random(game, 1, 5, "Random AI reaction time");
 			trapEnemies = true;
-			walkingThroughFireMultiplier = (float) Tools.random(game, 4, 8,
-					"Random AI walkthrough multiplier") * 0.1f;
+			walkingThroughFireMultiplier = (float) Tools.random(game, 4, 8, "Random AI walkthrough multiplier") * 0.1f;
 			kickBombsToStayAlive = true;
 		} else if (level == 7) {
 			// One function - stay alive!
@@ -274,8 +261,7 @@ public class AI {
 	public void getReachableLocations() {
 		if (reachableLocationsThread != null && reachableLocationsThread.isAlive())
 			return;
-		reachableLocationsThread = new Thread(new AIThread(),
-				"AI Thread p" + player.getIndex());
+		reachableLocationsThread = new Thread(new AIThread(), "AI Thread p" + player.getIndex());
 		reachableLocationsThread.setPriority(Thread.MIN_PRIORITY);
 		reachableLocationsThread.start();
 	}
@@ -287,8 +273,7 @@ public class AI {
 		for (int i = 0; i < stageMap[0].length; i++) {
 			for (int j = 0; j < stageMap.length; j++) {
 				int num = (int) stageMap[j][i];
-				if (weAreGoingToExplodeTime == -1
-						&& player.getCellPoint().distance(new Point(i, j)) == 0) {
+				if (weAreGoingToExplodeTime == -1 && player.getCellPoint().distance(new Point(i, j)) == 0) {
 					// System.out.println("found spot we are on. num: " + num);
 					if (num >= 0) {
 						// If this spot we are standing on is dangerous, make
@@ -359,8 +344,7 @@ public class AI {
 					// This value gets multiplied based on difficulty.
 					int cutoff = 1600 - player.speed * 100;
 					if (player.ai != null)
-						cutoff = (int) ((float) cutoff
-								* player.ai.walkingThroughFireMultiplier);
+						cutoff = (int) ((float) cutoff * player.ai.walkingThroughFireMultiplier);
 					if (num >= cutoff)
 						num = 10;
 				}
@@ -377,27 +361,23 @@ public class AI {
 		int[][] map = getMap(game, player);
 		Point playerPoint = player.getCellPoint();
 		AIStarPath aStarPath = null;
-		aStarPath = AIStar.getAIStarPath(AI.aStarReachableLocationsSettings, map,
-				playerPoint, new Point(-1, -1), 0, 0, 10, 10, 100000, 100000, -1, 2, -2,
-				100000, -3, 100000, -4, 2, -5, 100000, -10, 0, -11, 0, -12, 0, -13, 0,
-				-14, 2, -15, 0, -16, 2, -17, 2, -18, 2, -19, 2, -20, 2, -21, 0, -22, 10,
-				-23, 10, -24, 10, -25, 0, -26, 0, -27, 0);
+		aStarPath = AIStar.getAIStarPath(AI.aStarReachableLocationsSettings, map, playerPoint, new Point(-1, -1), 0, 0,
+				10, 10, 100000, 100000, -1, 2, -2, 100000, -3, 100000, -4, 2, -5, 100000, -10, 0, -11, 0, -12, 0, -13,
+				0, -14, 2, -15, 0, -16, 2, -17, 2, -18, 2, -19, 2, -20, 2, -21, 0, -22, 10, -23, 10, -24, 10, -25, 0,
+				-26, 0, -27, 0);
 		aStarPath.startAI(currentPath, pathFindingThread);
 		timeTook = aStarPath.getTime();
 		if (timeTook > 300)
 			System.err.println("Took " + timeTook + "ms to calculate astar!");
-		boolean newReachableLocations[][] = new boolean[game.stage.getHeight()][game.stage
-				.getWidth()];
-		long newReachableExplodableTiles[][] = new long[game.stage.getHeight()][game.stage
-				.getWidth()];
+		boolean newReachableLocations[][] = new boolean[game.stage.getHeight()][game.stage.getWidth()];
+		long newReachableExplodableTiles[][] = new long[game.stage.getHeight()][game.stage.getWidth()];
 		aStarPath.tiles.add(new Point(playerPoint.x, playerPoint.y));
 		ArrayList<ArrayList<Point>> possibleExplosions = new ArrayList<ArrayList<Point>>();
 		for (Point tile : aStarPath.tiles) {
 			newReachableLocations[tile.x][tile.y] = true;
 			ArrayList<Point> possibleExplosionsOnPoint = new ArrayList<Point>();
 			possibleExplosionsOnPoint.add(tile);
-			int adj = getBombAdjustmentValues(map, tile.x, tile.y, tile, tile, aStarPath,
-					possibleExplosionsOnPoint);
+			int adj = getBombAdjustmentValues(map, tile.x, tile.y, tile, tile, aStarPath, possibleExplosionsOnPoint);
 			newReachableExplodableTiles[tile.x][tile.y] += adj;
 			if (adj < 0 && newReachableExplodableTiles[tile.x][tile.y] < 0)
 				newReachableExplodableTiles[tile.x][tile.y] = 0;
@@ -411,24 +391,19 @@ public class AI {
 					possibleExplosionsOnPoint.add(new Point(up.x, up.y));
 					if (map[up.x][up.y] != -1) {
 						long before = newReachableExplodableTiles[tile.x][tile.y];
-						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(
-								map, up.x, up.y, null, tile, aStarPath,
-								possibleExplosionsOnPoint);
-						if (before != newReachableExplodableTiles[tile.x][tile.y]
-								|| map[up.x][up.y] == -2)
+						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(map, up.x, up.y, null,
+								tile, aStarPath, possibleExplosionsOnPoint);
+						if (before != newReachableExplodableTiles[tile.x][tile.y] || map[up.x][up.y] == -2)
 							foundExplodableTile[0] = true;
 					}
 				}
-				if (!foundExplodableTile[1]
-						&& down.y < newReachableExplodableTiles[0].length) {
+				if (!foundExplodableTile[1] && down.y < newReachableExplodableTiles[0].length) {
 					possibleExplosionsOnPoint.add(new Point(down.x, down.y));
 					if (map[down.x][down.y] != -1) {
 						long before = newReachableExplodableTiles[tile.x][tile.y];
-						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(
-								map, down.x, down.y, null, tile, aStarPath,
-								possibleExplosionsOnPoint);
-						if (before != newReachableExplodableTiles[tile.x][tile.y]
-								|| map[down.x][down.y] == -2)
+						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(map, down.x, down.y,
+								null, tile, aStarPath, possibleExplosionsOnPoint);
+						if (before != newReachableExplodableTiles[tile.x][tile.y] || map[down.x][down.y] == -2)
 							foundExplodableTile[1] = true;
 					}
 				}
@@ -436,24 +411,19 @@ public class AI {
 					possibleExplosionsOnPoint.add(new Point(left.x, left.y));
 					if (map[left.x][left.y] != -1) {
 						long before = newReachableExplodableTiles[tile.x][tile.y];
-						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(
-								map, left.x, left.y, null, tile, aStarPath,
-								possibleExplosionsOnPoint);
-						if (before != newReachableExplodableTiles[tile.x][tile.y]
-								|| map[left.x][left.y] == -2)
+						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(map, left.x, left.y,
+								null, tile, aStarPath, possibleExplosionsOnPoint);
+						if (before != newReachableExplodableTiles[tile.x][tile.y] || map[left.x][left.y] == -2)
 							foundExplodableTile[2] = true;
 					}
 				}
-				if (!foundExplodableTile[3]
-						&& right.x < newReachableExplodableTiles.length) {
+				if (!foundExplodableTile[3] && right.x < newReachableExplodableTiles.length) {
 					possibleExplosionsOnPoint.add(new Point(right.x, right.y));
 					if (map[right.x][right.y] != -1) {
 						long before = newReachableExplodableTiles[tile.x][tile.y];
-						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(
-								map, right.x, right.y, null, tile, aStarPath,
-								possibleExplosionsOnPoint);
-						if (before != newReachableExplodableTiles[tile.x][tile.y]
-								|| map[right.x][right.y] == -2)
+						newReachableExplodableTiles[tile.x][tile.y] += getBombAdjustmentValues(map, right.x, right.y,
+								null, tile, aStarPath, possibleExplosionsOnPoint);
+						if (before != newReachableExplodableTiles[tile.x][tile.y] || map[right.x][right.y] == -2)
 							foundExplodableTile[3] = true;
 					}
 				}
@@ -469,8 +439,7 @@ public class AI {
 			// we can reach it.
 			Point tile = aStarPath.tiles.get(k);
 			ArrayList<Point> possibleExplosionsOnPoint = possibleExplosions.get(k);
-			boolean testMap[][] = new boolean[game.stage.getHeight()][game.stage
-					.getWidth()];
+			boolean testMap[][] = new boolean[game.stage.getHeight()][game.stage.getWidth()];
 			for (int i = 0; i < testMap.length; i++)
 				for (int j = 0; j < testMap[i].length; j++)
 					testMap[i][j] = new Boolean(newReachableLocations[i][j]);
@@ -540,8 +509,7 @@ public class AI {
 					if (dist > i && explosion > 1)
 						explosion -= 0.6;
 				if (biggestExplosionPoint == null || biggestExplosion <= explosion) {
-					if (closestExplosion == -1 || closestExplosion > dist
-							|| biggestExplosion < explosion) {
+					if (closestExplosion == -1 || closestExplosion > dist || biggestExplosion < explosion) {
 						biggestExplosionPoint = p;
 						closestExplosion = dist;
 						biggestExplosion = (long) explosion;
@@ -556,8 +524,7 @@ public class AI {
 			if (tempSpeedRatio != speedRatio)
 				speedRatio = tempSpeedRatio;
 			goingToExplodePoint = biggestExplosionPoint;
-			int newDirectionToPress = getDirectionToTile(game, player,
-					goingToExplodePoint, this);
+			int newDirectionToPress = getDirectionToTile(game, player, goingToExplodePoint, this);
 			if (directionToPress == -1 && newDirectionToPress == -1) {
 
 			} else
@@ -566,8 +533,7 @@ public class AI {
 			goingToExplodePoint = null;
 		long thisTimeTook = (game.currentTimeMillis() - start);
 		if (thisTimeTook - timeTook > 300)
-			System.err.println("Took " + (thisTimeTook - timeTook)
-					+ "ms to calculate stay safe method!");
+			System.err.println("Took " + (thisTimeTook - timeTook) + "ms to calculate stay safe method!");
 		reachableLocations = newReachableLocations;
 		reachableExplodableTiles = newReachableExplodableTiles;
 		// for (int i = 0; i < 2; i++)
@@ -589,15 +555,15 @@ public class AI {
 			System.out.println("FINISHED: Took " + timeTook + " ms to compute");
 	}
 
-	public int getBombAdjustmentValues(int[][] map, int mapx, int mapy, Point pointOnMap,
-			Point bombOrigin, AIStarPath aStarPath, ArrayList<Point> possibleExplosions) {
+	public int getBombAdjustmentValues(int[][] map, int mapx, int mapy, Point pointOnMap, Point bombOrigin,
+			AIStarPath aStarPath, ArrayList<Point> possibleExplosions) {
 		long mapValue = map[mapx][mapy];
 		if (pointOnMap == null)
 			pointOnMap = new Point(mapx, mapy);
 		boolean isOriginOfBombSpot = bombOrigin.distance(pointOnMap) == 0;
 		int adjustment = 0;
-		ArrayList<Player> alivePlayers = Stage.getAlivePlayersOnTileExcludingPlayer(
-				new Point(pointOnMap.x, pointOnMap.y), player, game);
+		ArrayList<Player> alivePlayers = Stage
+				.getAlivePlayersOnTileExcludingPlayer(new Point(pointOnMap.x, pointOnMap.y), player, game);
 		if (alivePlayers.size() > 0) {
 			adjustment += playerHunterLevel;
 			if (!isOriginOfBombSpot && trapEnemies) {
@@ -620,8 +586,7 @@ public class AI {
 				Point up = new Point(middle.x, middle.y - 1);
 				Point down = new Point(middle.x, middle.y + 1);
 				for (Point p : aStarPath.tiles)
-					if (p.distance(left) == 0 || p.distance(right) == 0
-							|| p.distance(up) == 0 | p.distance(down) == 0)
+					if (p.distance(left) == 0 || p.distance(right) == 0 || p.distance(up) == 0 | p.distance(down) == 0)
 						walkableTiles.add(p);
 				if (walkableTiles.size() == 0) {
 					// ignore them, they're already trapped or something
@@ -692,8 +657,7 @@ public class AI {
 					mapValueRight = map[mapx + 1][mapy];
 				} catch (Exception e) {
 				}
-				long[] mapValues = new long[] { mapValueUp, mapValueDown, mapValueLeft,
-						mapValueRight };
+				long[] mapValues = new long[] { mapValueUp, mapValueDown, mapValueLeft, mapValueRight };
 				for (int i = 0; i < mapValues.length; i++) {
 					long m = mapValues[i];
 					if (m <= -10 && m != -23 && m != -22) {
@@ -735,6 +699,7 @@ public class AI {
 	}
 
 	public void drawReachableLocations(Graphics2D g) {
+		// TODO make look better
 		try {
 			if (player.deadTimer != -1)
 				return;
@@ -760,23 +725,20 @@ public class AI {
 						if (reachableExplodableTiles[i][j] != 0) {
 							g.setColor(new Color(0, 0, 255, 255));
 							Point mid = Stage.getExactTileMidPoint(game, new Point(j, i));
-							g.drawString("" + reachableExplodableTiles[i][j], mid.y - 10,
-									mid.x + 7);
+							g.drawString("" + reachableExplodableTiles[i][j], mid.y - 10, mid.x + 7);
 						}
 					}
 			Graphics2D g2d = (Graphics2D) g;
 			g2d.setStroke(new BasicStroke(10));
 			DoublePoint p = player.getExactPoint();
 			if (goingToExplodePoint != null) {
-				Point mid = Stage.getExactTileMidPoint(game,
-						new Point(goingToExplodePoint.x, goingToExplodePoint.y));
+				Point mid = Stage.getExactTileMidPoint(game, new Point(goingToExplodePoint.x, goingToExplodePoint.y));
 				g.setColor(new Color(255, 0, 50, 200));
 				// g.fillRect(mid.y - 15, mid.x - 15, 30, 30);
 				g2d.draw(new Line2D.Double(mid.x - 15, mid.y + 15, p.x + 15, p.y + 40));
 			}
 			if (goingToSafePoint != null) {
-				Point mid = Stage.getExactTileMidPoint(game,
-						new Point(goingToSafePoint.x, goingToSafePoint.y));
+				Point mid = Stage.getExactTileMidPoint(game, new Point(goingToSafePoint.x, goingToSafePoint.y));
 				g.setColor(new Color(255, 255, 0, 150));
 				// g.fillRect(mid.y - 15, mid.x - 15, 30, 30);
 				g2d.draw(new Line2D.Double(mid.x - 15, mid.y + 15, p.x + 15, p.y + 40));
@@ -790,15 +752,13 @@ public class AI {
 	 * @param canPlaceBombs
 	 *            Whether or not we're allowed to place bombs (ie. skull)
 	 * @param canMove
-	 *            Whether or not we're allowed to move (ie. not being host of
-	 *            game)
+	 *            Whether or not we're allowed to move (ie. not being host of game)
 	 */
 	public void tick(boolean canPlaceBombs, boolean canMove) {
 		if (!aiEnabled)
 			return;
 		getReachableLocations();
-		if (reachableLocations == null && reachableLocationsThread != null
-				&& reachableLocationsThread.isAlive()) {
+		if (reachableLocations == null && reachableLocationsThread != null && reachableLocationsThread.isAlive()) {
 			// System.out.println("wait for location thread");
 			return;
 		}
@@ -821,14 +781,12 @@ public class AI {
 			placingBomb = false;
 			directionToPress = -1;
 		}
-		if (goingToExplodePoint != null && walkToBombPointProactively && canMove
-				&& directionToPress != -1) {
+		if (goingToExplodePoint != null && walkToBombPointProactively && canMove && directionToPress != -1) {
 			long[][] collision = game.stage.getCollisionMap(game);
 			boolean walked = false;
 			try {
 				if (collision[goingToExplodePoint.y][goingToExplodePoint.x] == -1)
-					walked = goToTile(game, player, goingToExplodePoint,
-							directionToPress);
+					walked = goToTile(game, player, goingToExplodePoint, directionToPress);
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.err.println("AI issue " + goingToExplodePoint);
@@ -863,8 +821,7 @@ public class AI {
 				for (int i = 0; i < game.players.size(); i++)
 					try {
 						if (!game.players.get(i).equals(player))
-							for (int j = 0; j < game.players.get(i).getBombsLaid()
-									.size(); j++)
+							for (int j = 0; j < game.players.get(i).getBombsLaid().size(); j++)
 								bombs.add(game.players.get(i).getBombsLaid().get(j));
 					} catch (Exception e) {
 						// concurrent exception, retry
@@ -885,8 +842,7 @@ public class AI {
 					disableSafeMovingUntil = -1;
 				} else {
 					// walk to bomb spot
-					if (directionToPress != -1 && goToTile(game, player,
-							goingToExplodePoint, directionToPress)) {
+					if (directionToPress != -1 && goToTile(game, player, goingToExplodePoint, directionToPress)) {
 						disableSafeMovingUntil = game.currentTimeMillis() + 500;
 						keepMovingToBombUntil = game.currentTimeMillis() + 2000;
 					} else {
@@ -936,8 +892,8 @@ public class AI {
 			// + ourPosCollision + ")");
 			getReachableLocations();
 			Point closestSafePoint = null;
-			if (directionToPress == 0 || directionToPress == 3 || (directionToPress == -1
-					&& Tools.random(game, 0, 10, "Random direction of safety") >= 5)) {
+			if (directionToPress == 0 || directionToPress == 3
+					|| (directionToPress == -1 && Tools.random(game, 0, 10, "Random direction of safety") >= 5)) {
 				// We're currently travelling down or right. Maybe we're trying
 				// to pass fire this direction - so let's sort the map backwards
 				// to find the best safespot that's to the down-right instead of
@@ -951,8 +907,8 @@ public class AI {
 						// "): "
 						// + collision);
 						if (collision == -1 || (collision <= -10 && collision >= -30))
-							if (closestSafePoint == null || new Point(i, j)
-									.distance(loc) < loc.distance(closestSafePoint)) {
+							if (closestSafePoint == null
+									|| new Point(i, j).distance(loc) < loc.distance(closestSafePoint)) {
 								// System.out.println("ITS GOOD!");
 								closestSafePoint = new Point(i, j);
 							} else {
@@ -969,8 +925,8 @@ public class AI {
 						// "): "
 						// + collision);
 						if (collision == -1 || (collision <= -10 && collision >= -30))
-							if (closestSafePoint == null || new Point(i, j)
-									.distance(loc) < loc.distance(closestSafePoint)) {
+							if (closestSafePoint == null
+									|| new Point(i, j).distance(loc) < loc.distance(closestSafePoint)) {
 								// System.out.println("ITS GOOD!");
 								closestSafePoint = new Point(i, j);
 							} else {
@@ -987,8 +943,7 @@ public class AI {
 				// + ")");
 				goingToExplodePoint = null;
 				goingToSafePoint = closestSafePoint;
-				directionToPress = getDirectionToTile(game, player, closestSafePoint,
-						this);
+				directionToPress = getDirectionToTile(game, player, closestSafePoint, this);
 				keepMovingUntil = game.currentTimeMillis() + 2000;
 			} else {
 				// game.logger.log(LogLevel.ERROR,
@@ -997,8 +952,7 @@ public class AI {
 				ArrayList<Integer> possibleDirections = new ArrayList<Integer>();
 				ArrayList<Long> collisionRatings = new ArrayList<Long>();
 				ArrayList<Point> points = new ArrayList<Point>();
-				long currentCollisionRating = map[player.getCellPoint().x][player
-						.getCellPoint().y];
+				long currentCollisionRating = map[player.getCellPoint().x][player.getCellPoint().y];
 				for (int i = 0; i < map.length; i++)
 					for (int j = 0; j < map[i].length; j++) {
 						if (reachableLocations != null && !reachableLocations[i][j])
@@ -1024,8 +978,7 @@ public class AI {
 				Point goingToPoint = null;
 				int bestMove = -1;
 				for (int i = 0; i < collisionRatings.size(); i++)
-					if (bestMove == -1
-							|| collisionRatings.get(i) > collisionRatings.get(bestMove)) {
+					if (bestMove == -1 || collisionRatings.get(i) > collisionRatings.get(bestMove)) {
 						bestMove = i;
 						goingToPoint = points.get(i);
 					}
@@ -1036,8 +989,7 @@ public class AI {
 						reachable.add(player.getCellPoint());
 						for (int i = 0; i < map.length; i++)
 							for (int j = 0; j < map[i].length; j++) {
-								if (reachableLocations != null
-										&& !reachableLocations[i][j])
+								if (reachableLocations != null && !reachableLocations[i][j])
 									continue;
 								Point p = new Point(i, j);
 								if (!reachable.contains(p))
@@ -1052,21 +1004,16 @@ public class AI {
 							Point[] allPoints = new Point[] { top, down, left, right };
 							for (int j = 0; j < allPoints.length; j++) {
 								Point thisDir = allPoints[j];
-								Point p = new Point(reach.x + thisDir.x,
-										reach.y + thisDir.y);
+								Point p = new Point(reach.x + thisDir.x, reach.y + thisDir.y);
 								Bomb b = Bomb.get(p, game);
 								if (b != null) {
-									Point kickedPoint = new Point(
-											reachable.get(i).x + thisDir.x * 2,
+									Point kickedPoint = new Point(reachable.get(i).x + thisDir.x * 2,
 											reachable.get(i).y + thisDir.y * 2);
-									if (kickedPoint.x < 0
-											|| kickedPoint.x > game.stage.get()[0].length
-											|| kickedPoint.y < 0
-											|| kickedPoint.y > game.stage.get().length) {
+									if (kickedPoint.x < 0 || kickedPoint.x > game.stage.get()[0].length
+											|| kickedPoint.y < 0 || kickedPoint.y > game.stage.get().length) {
 										continue;
 									}
-									int tile = game.stage
-											.get()[kickedPoint.y][kickedPoint.x];
+									int tile = game.stage.get()[kickedPoint.y][kickedPoint.x];
 									if (tile == -1) {
 										tryingToKickBomb = true;
 										goingToSafePoint = p;
@@ -1083,8 +1030,7 @@ public class AI {
 											}
 										} else {
 											goingToSafePoint = reach;
-											directionToPress = getDirectionToTile(game,
-													player, reach, this);
+											directionToPress = getDirectionToTile(game, player, reach, this);
 										}
 									}
 								}
@@ -1122,8 +1068,7 @@ public class AI {
 					speedRatio = tempSpeedRatio;
 			}
 			// Move closer to center of tile
-			if (keepMovingUntil - game.currentTimeMillis() < 1500
-					&& tempSpeedRatio == speedRatio && speedRatio > 100) {
+			if (keepMovingUntil - game.currentTimeMillis() < 1500 && tempSpeedRatio == speedRatio && speedRatio > 100) {
 				tempSpeedRatio = speedRatio;
 				speedRatio = 50;
 			}
@@ -1187,8 +1132,7 @@ public class AI {
 		return true;
 	}
 
-	public boolean goToTile(MainBomberman game, Player player, Point goal,
-			int direction) {
+	public boolean goToTile(MainBomberman game, Player player, Point goal, int direction) {
 		if (direction != -1)
 			if (!tryingToMove) {
 				tryingToMove = true;
@@ -1197,8 +1141,7 @@ public class AI {
 				tryingToMoveEndPoint = goal;
 				tryingToMoveExactPoint = player.getExactPoint();
 			} else if (tryingToMoveExactPoint.distance(player.getExactPoint()) < 8
-					&& tryingToMoveEndPoint.distance(goal) == 0
-					&& game.currentTimeMillis() - tryingToMoveTime > 500) {
+					&& tryingToMoveEndPoint.distance(goal) == 0 && game.currentTimeMillis() - tryingToMoveTime > 500) {
 				int lastDir = new Integer(direction);
 				while (lastDir == direction)
 					direction = Tools.random(null, 7, "Get unstuck");
@@ -1223,8 +1166,7 @@ public class AI {
 				tryingToMoveEndPoint = goal;
 				tryingToMoveExactPoint = player.getExactPoint();
 			} else if (tryingToMoveExactPoint.distance(player.getExactPoint()) < 8
-					&& tryingToMoveEndPoint.distance(goal) == 0
-					&& game.currentTimeMillis() - tryingToMoveTime > 500) {
+					&& tryingToMoveEndPoint.distance(goal) == 0 && game.currentTimeMillis() - tryingToMoveTime > 500) {
 				int lastDir = new Integer(dir);
 				while (lastDir == dir)
 					dir = Tools.random(null, 7, "Get unstuck");
@@ -1242,8 +1184,7 @@ public class AI {
 	ArrayList<Integer> lastSearchedDirection = new ArrayList<Integer>();
 	long lastSearchedTimeCutoff = 300;
 
-	public static int getDirectionToTile(MainBomberman game, Player player, Point end,
-			AI aiClass) {
+	public static int getDirectionToTile(MainBomberman game, Player player, Point end, AI aiClass) {
 		try {
 			if (end == null)
 				return -1;
@@ -1252,8 +1193,7 @@ public class AI {
 				Point playerMid = player.getMiddleOfBodyPoint();
 				Point stageMid = Stage.getExactTileMidPoint(game, start);
 				stageMid = new Point(stageMid.x - 19, stageMid.y + 15);
-				if (Math.abs(playerMid.x - stageMid.x) < 4
-						&& Math.abs(playerMid.y - stageMid.y) < 4)
+				if (Math.abs(playerMid.x - stageMid.x) < 4 && Math.abs(playerMid.y - stageMid.y) < 4)
 					return -1;
 				// System.out.println("Adjusting (" + playerMid + ") to (" +
 				// stageMid + ")");
@@ -1275,8 +1215,7 @@ public class AI {
 					Point e = aiClass.lastSearchedEnd.get(i);
 					if (e.distance(end) == 0) {
 						long t = aiClass.lastSearchedTime.get(i);
-						if (Math.abs(t - game
-								.currentTimeMillis()) < aiClass.lastSearchedTimeCutoff) {
+						if (Math.abs(t - game.currentTimeMillis()) < aiClass.lastSearchedTimeCutoff) {
 							return aiClass.lastSearchedDirection.get(i);
 						}
 					}
@@ -1285,8 +1224,7 @@ public class AI {
 			for (int i = 0; i < 1 && i < aiClass.lastSearchedStart.size(); i++) {
 				// Continue looping until the first one is recent
 				long t = aiClass.lastSearchedTime.get(i);
-				if (Math.abs(
-						t - game.currentTimeMillis()) >= aiClass.lastSearchedTimeCutoff) {
+				if (Math.abs(t - game.currentTimeMillis()) >= aiClass.lastSearchedTimeCutoff) {
 					aiClass.lastSearchedStart.remove(i);
 					aiClass.lastSearchedEnd.remove(i);
 					aiClass.lastSearchedTime.remove(i);
@@ -1298,11 +1236,10 @@ public class AI {
 			// System.out.println("Trying to get from (" + start + ") to (" +
 			// end +
 			// ")");
-			AIStarPath aStarPath = AIStar.getAIStarPath(AI.aStarDefaultSettings, map,
-					start, end, 0, 0, 10, 10, 100000, 100000, -1, 2, -2, 100000, -3,
-					100000, -4, 2, -5, 100000, -10, 0, -11, 0, -12, 0, -13, 0, -14, 1,
-					-15, 0, -16, 1, -17, 1, -18, 1, -19, 1, -20, 1, -21, 0, -22, 10, -23,
-					10, -24, 10, -25, 0, -26, 0, -27, 0);
+			AIStarPath aStarPath = AIStar.getAIStarPath(AI.aStarDefaultSettings, map, start, end, 0, 0, 10, 10, 100000,
+					100000, -1, 2, -2, 100000, -3, 100000, -4, 2, -5, 100000, -10, 0, -11, 0, -12, 0, -13, 0, -14, 1,
+					-15, 0, -16, 1, -17, 1, -18, 1, -19, 1, -20, 1, -21, 0, -22, 10, -23, 10, -24, 10, -25, 0, -26, 0,
+					-27, 0);
 			aStarPath.startAI(aiClass.currentPath, aiClass.pathFindingThread);
 			// for (int i = 0; i < aStarPath.tiles.size(); i++)
 			// System.out.println("Got path tile: " + aStarPath.tiles.get(i));
@@ -1351,13 +1288,12 @@ public class AI {
 	}
 
 	public static class AIStar extends AStar {
-		public static AIStarPath getAIStarPath(int[][] map, Point start, Point end,
-				float... numberWeights) {
+		public static AIStarPath getAIStarPath(int[][] map, Point start, Point end, float... numberWeights) {
 			return new AIStarPath(map, start, end, numberWeights);
 		}
 
-		public static AIStarPath getAIStarPath(Settings settings, int[][] map,
-				Point start, Point end, float... numberWeights) {
+		public static AIStarPath getAIStarPath(Settings settings, int[][] map, Point start, Point end,
+				float... numberWeights) {
 			AIStarPath path = new AIStarPath(map, start, end, numberWeights);
 			path.setSettings(settings);
 			return path;
@@ -1436,8 +1372,7 @@ public class AI {
 				for (int i = 0; i < map.length; i++) {
 					for (int j = 0; j < map[i].length; j++) {
 						int m = map[i][j];
-						if (m >= 0 && m <= 4500 && m < originalAnswer
-								&& !checked.contains(m)) {
+						if (m >= 0 && m <= 4500 && m < originalAnswer && !checked.contains(m)) {
 							// System.out.println("found other, better bomb!");
 							ourPlaceInBombs += 100;
 							checked.add(m);
