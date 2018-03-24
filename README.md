@@ -7,8 +7,8 @@ A Java recreation of the classic game Saturn Bomberman
 3. Compile Saturn Bomberman
 4. Run MainBomberman.java
 
-## Multiplayer
-Presently to run Multiplayer, someone is required to host the MasterServer.
+## Online Multiplayer
+Presently to run Online Multiplayer, someone is required to host MasterServer with forwarded ports.
 ### Client
 1. Create a base-level folder called *ip*
 2. Create a file in the ip folder called *serverIP.txt* and put your server IP there
