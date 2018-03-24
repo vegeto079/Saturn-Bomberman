@@ -149,7 +149,7 @@ public class Network {
 				// Could throw an Exception if a Client is added/removed while
 				// running this. Just ignore it, next tick will correct it.
 			}
-			if (server.getConnectedClientAmt() > 0
+			if (server.getConnectedClientAmt() > 0 
 					&& game.currentTimeMillis() - toldClientsInfoTime >= tellClientsInfoDelay) {
 				game.logger.log(LogLevel.DEBUG, "It's been a while, sending clients server info.");
 				toldClientsInfoTime = game.currentTimeMillis();
