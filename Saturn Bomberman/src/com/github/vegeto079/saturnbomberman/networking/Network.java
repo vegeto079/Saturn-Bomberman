@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Stroke;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import com.github.vegeto079.saturnbomberman.main.MainBomberman;
@@ -24,6 +25,7 @@ import com.github.vegeto079.ngcommontools.main.Logger.*;
 import com.github.vegeto079.ngcommontools.networking.*;
 import com.github.vegeto079.ngcommontools.networking.Server.*;
 import com.github.vegeto079.ngcommontools.networking.Client.*;
+
 /**
  * 
  * @author Nathan
@@ -50,8 +52,8 @@ public class Network {
 	public int serverMaxClients;
 
 	/**
-	 * The amount of time (in ms) between connection attempts with
-	 * clients/servers. Ping cannot be below this value.
+	 * The amount of time (in ms) between connection attempts with clients/servers.
+	 * Ping cannot be below this value.
 	 */
 	public long timeBetweenConnectionAttempts = 25;
 	// public long timeBetweenConnectionAttempts = 50;
@@ -62,14 +64,16 @@ public class Network {
 	 */
 	public long toldClientsInfoTime = 0;
 	/**
-	 * The amount of time we wait before telling Clients general game
-	 * information, just incase.
+	 * The amount of time we wait before telling Clients general game information,
+	 * just in-case.
 	 */
 	public long tellClientsInfoDelay = 1000;
 	public ArrayList<String[]> connectedClients = null;
 	public int inputTurn = -1;
 	public int myInputTurnP1 = -1;
 	public int myInputTurnP2 = -1;
+
+	public int port = -1;
 
 	public MS masterServer;
 	public S server;
@@ -88,12 +92,18 @@ public class Network {
 
 	public NetworkTalking talking;
 	/**
-	 * Set this to simulate client latency.
+	 * Set this to simulate client latency (in ms).
 	 */
 	public long simulatedLag = 0;
 
 	public Network(MainBomberman game) {
 		this.game = game;
+		if (port == -1)
+			try {
+				port = Integer.parseInt(Tools.readResourceFile("/ip/serverIP.txt").get(0));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 		graphic = new NetworkGraphic();
 		talking = new NetworkTalking(game);
 		masterServer = new MS();
@@ -104,8 +114,7 @@ public class Network {
 	 * Sets {@link #randomCursor}
 	 */
 	public void setRandomCursor() {
-		randomCursor = (int) (Math.random() * (game.pictures.networkingCursor.size() - 1)
-				/ 2);
+		randomCursor = (int) (Math.random() * (game.pictures.networkingCursor.size() - 1) / 2);
 	}
 
 	/**
@@ -116,8 +125,8 @@ public class Network {
 	}
 
 	/**
-	 * The main ticking thread for the Network. Handles anything that needs to
-	 * be on-going, such as messages that must be sent periodically.
+	 * The main ticking thread for the Network. Handles anything that needs to be
+	 * on-going, such as messages that must be sent periodically.
 	 */
 	public void tick() {
 		if (server != null) {
@@ -140,33 +149,28 @@ public class Network {
 				// Could throw an Exception if a Client is added/removed while
 				// running this. Just ignore it, next tick will correct it.
 			}
-			if (server.getConnectedClientAmt() > 0 && game.currentTimeMillis()
-					- toldClientsInfoTime >= tellClientsInfoDelay) {
-				game.logger.log(LogLevel.DEBUG,
-						"It's been a while, sending clients server info.");
+			if (server.getConnectedClientAmt() > 0
+					&& game.currentTimeMillis() - toldClientsInfoTime >= tellClientsInfoDelay) {
+				game.logger.log(LogLevel.DEBUG, "It's been a while, sending clients server info.");
 				toldClientsInfoTime = game.currentTimeMillis();
 				String message = "SERVER_INFO:" + game.options.multiplayer.maxPlayers;
 				for (int i = 0; i < connectedClients.size(); i++) {
 					int ping = -1;
-					if (!connectedClients.get(i)[0]
-							.equals(game.options.multiplayer.username))
+					if (!connectedClients.get(i)[0].equals(game.options.multiplayer.username))
 						ping = server.getClientPing(connectedClients.get(i)[0]);
 					// continue;
-					message += ":" + connectedClients.get(i)[0] + Client.SPLITTER
-							+ connectedClients.get(i)[1] + Client.SPLITTER + ping
-							+ Client.SPLITTER + connectedClients.get(i)[2];
+					message += ":" + connectedClients.get(i)[0] + Client.SPLITTER + connectedClients.get(i)[1]
+							+ Client.SPLITTER + ping + Client.SPLITTER + connectedClients.get(i)[2];
 				}
-				if (game.state.is(StateEnum.MATCH_SELECTION)
-						|| game.state.is(StateEnum.END_OF_MATCH))
+				if (game.state.is(StateEnum.MATCH_SELECTION) || game.state.is(StateEnum.END_OF_MATCH))
 					message += "-_-SEED-_-" + game.seed + "-" + game.randomCount;
 				server.sendMessageToAllClients(message);
 			}
 		} else if (client != null) {
-			if (client.isConnected() && game.currentTimeMillis()
-					- toldClientsInfoTime >= tellClientsInfoDelay) {
+			if (client.isConnected() && game.currentTimeMillis() - toldClientsInfoTime >= tellClientsInfoDelay) {
 				toldClientsInfoTime = Long.MAX_VALUE; // dont tell twice
-				client.sendMessageToServer("CLIENT_INFO" + Client.SPLITTER
-						+ game.options.multiplayer.localPlayers + Client.SPLITTER);
+				client.sendMessageToServer(
+						"CLIENT_INFO" + Client.SPLITTER + game.options.multiplayer.localPlayers + Client.SPLITTER);
 			}
 		}
 		runNetworkEvents();
@@ -194,8 +198,8 @@ public class Network {
 	}
 
 	/**
-	 * @return The amount of currently connected Clients. Takes into account
-	 *         Clients with more than one local player.
+	 * @return The amount of currently connected Clients. Takes into account Clients
+	 *         with more than one local player.
 	 */
 	public int getConnectedClientAmt() {
 		try {
@@ -229,8 +233,8 @@ public class Network {
 	}
 
 	/**
-	 * @return The highest amount of ping (multiplied by 2) of any connected
-	 *         player, used as a buffer to time all clients together.<br>
+	 * @return The highest amount of ping (multiplied by 2) of any connected player,
+	 *         used as a buffer to time all clients together.<br>
 	 *         Returns 0 if not online. Minimum of 250 when online.
 	 */
 	public int getPingBuffer() {
@@ -263,16 +267,14 @@ public class Network {
 	public void startServer() {
 		connectedClients = new ArrayList<String[]>();
 		serverMessageHandler = new BombermanServerMessageHandler();
-		server = new S(serverMessageHandler, game.logger, 5678,
-				timeBetweenConnectionAttempts, 100000, game.seed,
+		server = new S(serverMessageHandler, game.logger, port, timeBetweenConnectionAttempts, 100000, game.seed,
 				game.options.multiplayer.username);
 		server.openIncomingClientConnection();
 
 	}
 
 	/**
-	 * Starts {@link Network#client} and attempts to connect to the given
-	 * Server.
+	 * Starts {@link Network#client} and attempts to connect to the given Server.
 	 * 
 	 * @param ip
 	 *            Server to connect to.
@@ -286,7 +288,7 @@ public class Network {
 		clientMessageHandler = new BombermanClientMessageHandler();
 		client = new C(clientMessageHandler, game.logger, timeBetweenConnectionAttempts,
 				game.options.multiplayer.username);
-		client.connectToServer(ip, 5678, 5);
+		client.connectToServer(ip, port, 5);
 		connectedClients = new ArrayList<String[]>();
 	}
 
@@ -304,35 +306,31 @@ public class Network {
 		 * Begin connection to the Master Server.
 		 * 
 		 * @param game
-		 * @return Whether or not we successfully connected to the Master
-		 *         Server.
+		 * @return Whether or not we successfully connected to the Master Server.
 		 */
 		public boolean connect() {
 			if (overrideMasterServerIP != null)
 				msConnector.ip = overrideMasterServerIP;
-			return msConnector.run(msConnector.ip, game.logger,
-					game.options.multiplayer.username);
+			return msConnector.run(msConnector.ip, game.logger, game.options.multiplayer.username);
 		}
 
 		/**
-		 * @return Whether or not we are currently connected to the Master
-		 *         Server.
+		 * @return Whether or not we are currently connected to the Master Server.
 		 */
 		public boolean isConnected() {
 			return msConnector.connected;
 		}
 
 		/**
-		 * @return Whether or not we are currently connecting to the Master
-		 *         Server.
+		 * @return Whether or not we are currently connecting to the Master Server.
 		 */
 		public boolean isConnecting() {
 			return msConnector.connecting;
 		}
 
 		/**
-		 * @return Whether or not we have been whitelisted for running P2P
-		 *         connections by the Master Server.
+		 * @return Whether or not we have been whitelisted for running P2P connections
+		 *         by the Master Server.
 		 */
 		public boolean weCanP2P() {
 			return msConnector.canRunP2P;
@@ -346,8 +344,7 @@ public class Network {
 		}
 
 		/**
-		 * @return Information regarding all Clients connected to the Master
-		 *         Server.
+		 * @return Information regarding all Clients connected to the Master Server.
 		 */
 		public ArrayList<String[]> getClientInfo() {
 			return msConnector.getMasterServerClientInfo();
@@ -373,16 +370,13 @@ public class Network {
 	 */
 	public class S extends Server {
 
-		public S(ServerMessageHandler messageHandler, Logger logger, int port,
-				long timeBetweenConnectionAttempts, long clientTimeout, long seed,
-				String username) {
-			super(messageHandler, logger, port, timeBetweenConnectionAttempts,
-					clientTimeout, seed, username);
+		public S(ServerMessageHandler messageHandler, Logger logger, int port, long timeBetweenConnectionAttempts,
+				long clientTimeout, long seed, String username) {
+			super(messageHandler, logger, port, timeBetweenConnectionAttempts, clientTimeout, seed, username);
 		}
 
 		/**
-		 * Sets information regarding connected/connecting clients to our
-		 * server.
+		 * Sets information regarding connected/connecting clients to our server.
 		 * 
 		 * @param connectedClients
 		 * @param maxClients
@@ -398,8 +392,7 @@ public class Network {
 		@Override
 		public void disconnect() {
 			if (connectedClients.size() > game.options.multiplayer.localPlayers)
-				Tools.displayDialog(
-						"Uh oh! Server disconnected. This is unrecoverable and requires a game restart.");
+				Tools.displayDialog("Uh oh! Server disconnected. This is unrecoverable and requires a game restart.");
 			super.disconnect();
 			client = null;
 		}
@@ -407,8 +400,7 @@ public class Network {
 		@Override
 		public void onExit(Handler handler, int index) {
 			super.onExit(handler, index);
-			server.sendMessageToAllClients(
-					"SERVER:CLIENTDISCONNECT" + Client.SPLITTER + handler.getTheirName());
+			server.sendMessageToAllClients("SERVER:CLIENTDISCONNECT" + Client.SPLITTER + handler.getTheirName());
 			Tools.displayDialog("Uh oh! Client \"" + handler.getTheirName()
 					+ "\"Disconnected. This is unrecoverable and requires a game restart.");
 		}
@@ -418,15 +410,15 @@ public class Network {
 	 * Handles all information regarding Client (<b>C</b>).
 	 */
 	public class C extends Client {
-		public C(ClientMessageHandler messageHandler, Logger logger,
-				long timeBetweenConnectionAttempts, String username) {
+		public C(ClientMessageHandler messageHandler, Logger logger, long timeBetweenConnectionAttempts,
+				String username) {
 			super(messageHandler, logger, timeBetweenConnectionAttempts, username);
 			lag = simulatedLag;
 		}
 
 		/**
-		 * Runs {@link Client#disconnect()} normally, then sets
-		 * {@link Network#client} to null.
+		 * Runs {@link Client#disconnect()} normally, then sets {@link Network#client}
+		 * to null.
 		 */
 		@Override
 		public void disconnect() {
@@ -445,31 +437,28 @@ public class Network {
 		for (int i = 0; i < connectedClients.size(); i++)
 			if (weAreHost()) {
 				if (!connectedClients.get(i)[2].equals(set))
-					connectedClients.set(i, new String[] { connectedClients.get(i)[0],
-							connectedClients.get(i)[1], set });
+					connectedClients.set(i,
+							new String[] { connectedClients.get(i)[0], connectedClients.get(i)[1], set });
 			} else if (!connectedClients.get(i)[3].equals(set))
-				connectedClients.set(i, new String[] { connectedClients.get(i)[0],
-						connectedClients.get(i)[1], connectedClients.get(i)[2], set });
+				connectedClients.set(i, new String[] { connectedClients.get(i)[0], connectedClients.get(i)[1],
+						connectedClients.get(i)[2], set });
 	}
 
 	public class BombermanServerMessageHandler extends ServerMessageHandler {
 
 		public void process(String message) {
 			if (message.contains("CLIENT_INFO")) {
-				game.logger.log(LogLevel.DEBUG,
-						"Got client info message! (" + message + ")");
+				game.logger.log(LogLevel.DEBUG, "Got client info message! (" + message + ")");
 				String username = message.split(Client.USERNAME_SPLITTER)[1];
 				String[] split = message.split(Client.SPLITTER);
 				int localClients = Integer.parseInt(split[1]);
 				connectedClients.add(new String[] { username, "" + localClients, "1" });
 			} else if (message.startsWith("CLIENT:")) {
 				game.logger.log(LogLevel.DEBUG, "Got client message!");
-				String username = message.split(":")[1]
-						.split(Client.USERNAME_SPLITTER)[1];
+				String username = message.split(":")[1].split(Client.USERNAME_SPLITTER)[1];
 				message = message.split(":")[1].split(Client.USERNAME_SPLITTER)[0];
 				if (message.startsWith("KEY")) {
-					game.logger.log(LogLevel.DEBUG,
-							"Got client message for key! (" + message + ")");
+					game.logger.log(LogLevel.DEBUG, "Got client message for key! (" + message + ")");
 					String[] counters = message.split("-_-=COUNTER=-_-");
 					for (int i = 1; i < counters.length; i++)
 						game.counter[i - 1] = Long.parseLong(counters[i]);
@@ -483,72 +472,56 @@ public class Network {
 						if (key.equals(msg[i]))
 							keyCode = buttons[i];
 					if (keyCode == -1)
-						game.logger.log(LogLevel.ERROR,
-								"Couldn't find key from message! " + message);
+						game.logger.log(LogLevel.ERROR, "Couldn't find key from message! " + message);
 					else {
 						boolean press = message.split(Client.SPLITTER)[1].equals("PRESS");
 						for (int i = 0; i < server.getHandlers().size(); i++) {
-							String handlerName = server.getHandlers().get(i)
-									.getTheirName();
+							String handlerName = server.getHandlers().get(i).getTheirName();
 							if (handlerName.equals(username))
 								continue;
 							else
 								server.sendMessageToClient(
-										"SERVER:KEY" + Client.SPLITTER
-												+ message.split(Client.SPLITTER)[1]
-												+ Client.SPLITTER
-												+ message.split(Client.SPLITTER)[2],
+										"SERVER:KEY" + Client.SPLITTER + message.split(Client.SPLITTER)[1]
+												+ Client.SPLITTER + message.split(Client.SPLITTER)[2],
 										handlerName);
 						}
 						if (press) {
 							game.logger.log(LogLevel.DEBUG,
-									"Pressing key (client request): " + keyCode + " ("
-											+ key + ")");
+									"Pressing key (client request): " + keyCode + " (" + key + ")");
 							game.keyPressed(keyCode);
 						} else {
 							game.logger.log(LogLevel.DEBUG,
-									"Releasing key (client request): " + keyCode + " ("
-											+ key + ")");
+									"Releasing key (client request): " + keyCode + " (" + key + ")");
 							game.keyReleased(keyCode);
 						}
 					}
 				} else if (message.equals("READY")) {
-					game.logger.log(LogLevel.DEBUG,
-							"Client says they're ready! (" + message + ")");
+					game.logger.log(LogLevel.DEBUG, "Client says they're ready! (" + message + ")");
 					boolean allReady = true;
 					for (int i = 0; i < connectedClients.size(); i++) {
-						if (connectedClients.get(i)[0].equals(username)
-								&& connectedClients.get(i)[2].equals("0")) {
-							game.logger.log(LogLevel.DEBUG,
-									"Set " + username + " to ready.");
+						if (connectedClients.get(i)[0].equals(username) && connectedClients.get(i)[2].equals("0")) {
+							game.logger.log(LogLevel.DEBUG, "Set " + username + " to ready.");
 							connectedClients.set(i,
-									new String[] { connectedClients.get(i)[0],
-											connectedClients.get(i)[1], "1" });
+									new String[] { connectedClients.get(i)[0], connectedClients.get(i)[1], "1" });
 						}
 						if (!connectedClients.get(i)[2].equals("1"))
 							allReady = false;
 					}
 					if (allReady)
-						if (game.state.is(StateEnum.GOING_TO_STAGE)
-								&& game.counter[3] == 0) {
+						if (game.state.is(StateEnum.GOING_TO_STAGE) && game.counter[3] == 0) {
 							// TODO: starting at diff times?
 							long startGame = game.currentTimeMillis() + getPingBuffer();
 							game.logger.log(LogLevel.DEBUG,
-									"Everyone is ready! Time to go! (" + message
-											+ ") startGame (" + startGame
-											+ ") time until game ("
-											+ (startGame - game.currentTimeMillis())
-											+ ")");
-							server.sendMessageToAllClients(
-									"SERVER:STARTGAME" + Client.SPLITTER + startGame);
+									"Everyone is ready! Time to go! (" + message + ") startGame (" + startGame
+											+ ") time until game (" + (startGame - game.currentTimeMillis()) + ")");
+							server.sendMessageToAllClients("SERVER:STARTGAME" + Client.SPLITTER + startGame);
 							game.setPause(Pause.ALL);
 							game.counter[1] = 0;
 							game.counter[2] = startGame;
 							game.counter[3] = 2;
 							game.setPause(Pause.NONE);
 						} else if (game.state.is(StateEnum.END_OF_MATCH)) {
-							game.logger.log(LogLevel.DEBUG,
-									"Everyone is ready! Time to go! (" + message + ")");
+							game.logger.log(LogLevel.DEBUG, "Everyone is ready! Time to go! (" + message + ")");
 							server.sendMessageToAllClients("SERVER:SELECTMATCH");
 							game.setPause(Pause.ALL);
 							game.sound.play("Select");
@@ -561,15 +534,12 @@ public class Network {
 							game.setPause(Pause.NONE);
 						}
 				} else if (message.equals("NEEDSEED")) {
-					game.logger.log(LogLevel.DEBUG,
-							"Client asked for seed, sending info.");
-					server.sendMessageToClient("SERVER:SEEDINFO" + Client.SPLITTER
-							+ game.seed + Client.SPLITTER + game.counter[7]
-							+ Client.SPLITTER + game.counter[6], username);
+					game.logger.log(LogLevel.DEBUG, "Client asked for seed, sending info.");
+					server.sendMessageToClient("SERVER:SEEDINFO" + Client.SPLITTER + game.seed + Client.SPLITTER
+							+ game.counter[7] + Client.SPLITTER + game.counter[6], username);
 				}
 			} else if (message.startsWith("GAME:")) {
-				server.sendMessageToAllClientsExcludingNames(
-						message.split(Client.USERNAME_SPLITTER)[0],
+				server.sendMessageToAllClientsExcludingNames(message.split(Client.USERNAME_SPLITTER)[0],
 						message.split(Client.USERNAME_SPLITTER)[1]);
 				// server.sendMessageToAllClients(message);
 				processGameMessage(message);
@@ -582,12 +552,10 @@ public class Network {
 		public void process(String message) {
 			if (message.contains("SERVER_INFO")) {
 				message = message.split(Client.USERNAME_SPLITTER)[0];
-				game.logger.log(LogLevel.DEBUG,
-						"Got server info message! (" + message + ")");
+				game.logger.log(LogLevel.DEBUG, "Got server info message! (" + message + ")");
 				if (message.contains("-_-SEED-_-")) {
 					String seedInfo = message.split("-_-SEED-_-")[1];
-					game.setSeed(Long.parseLong(seedInfo.split("-")[0]),
-							Long.parseLong(seedInfo.split("-")[1]));
+					game.setSeed(Long.parseLong(seedInfo.split("-")[0]), Long.parseLong(seedInfo.split("-")[1]));
 					message = message.split("-_-SEED-_-")[0];
 				}
 				ArrayList<String[]> tempConnectedClients = new ArrayList<String[]>();
@@ -595,8 +563,8 @@ public class Network {
 				serverMaxClients = Integer.parseInt(split[1]);
 				for (int i = 2; i < split.length; i++) {
 					String[] clientInfo = split[i].split(Client.SPLITTER);
-					tempConnectedClients.add(new String[] { clientInfo[0], clientInfo[1],
-							clientInfo[2], clientInfo[3] });
+					tempConnectedClients
+							.add(new String[] { clientInfo[0], clientInfo[1], clientInfo[2], clientInfo[3] });
 				}
 				connectedClients = tempConnectedClients;
 			} else if (message.startsWith("SERVER:")) {
@@ -629,32 +597,27 @@ public class Network {
 						if (key.equals(msg[i]))
 							keyCode = buttons[i];
 					if (keyCode == -1)
-						game.logger.log(LogLevel.ERROR,
-								"Couldn't find key from message! " + message);
+						game.logger.log(LogLevel.ERROR, "Couldn't find key from message! " + message);
 					else {
 						boolean press = message.split(Client.SPLITTER)[1].equals("PRESS");
 						if (press) {
 							game.logger.log(LogLevel.DEBUG,
-									"Pressing key (server request): " + keyCode + " ("
-											+ key + ")");
+									"Pressing key (server request): " + keyCode + " (" + key + ")");
 							game.keyPressed(keyCode);
 						} else {
 							game.logger.log(LogLevel.DEBUG,
-									"Releasing key (server request): " + keyCode + " ("
-											+ key + ")");
+									"Releasing key (server request): " + keyCode + " (" + key + ")");
 							game.keyReleased(keyCode);
 						}
 					}
 				} else if (message.startsWith("PLAYER")) {
-					game.logger.log(LogLevel.DEBUG,
-							"Got server message for player position! (" + message + ")");
+					game.logger.log(LogLevel.DEBUG, "Got server message for player position! (" + message + ")");
 					int ourCount = Integer.parseInt(message.split(Client.SPLITTER)[1]);
 					myInputTurnP1 = ourCount;
 					if (game.options.multiplayer.localPlayers == 2)
 						myInputTurnP2 = ourCount + 1;
 				} else if (message.startsWith("STAGE_SELECT")) {
-					game.logger.log(LogLevel.DEBUG,
-							"Got server message for stage selection! (" + message + ")");
+					game.logger.log(LogLevel.DEBUG, "Got server message for stage selection! (" + message + ")");
 					game.stage = null;
 					game.pause = Pause.ALL;
 					game.counter[0] = 19;
@@ -670,10 +633,8 @@ public class Network {
 					game.setPause(Pause.ALL);
 					long startGame = Long.parseLong(message.split(Client.SPLITTER)[1]);
 					game.logger.log(LogLevel.DEBUG,
-							"Got server message to start game! Starting very soon. ("
-									+ message + ") startGame (" + startGame
-									+ ") time until game ("
-									+ (startGame - game.currentTimeMillis()) + ")");
+							"Got server message to start game! Starting very soon. (" + message + ") startGame ("
+									+ startGame + ") time until game (" + (startGame - game.currentTimeMillis()) + ")");
 					game.counter[2] = startGame;
 					game.counter[3] = 2;
 					game.setPause(Pause.NONE);
@@ -681,8 +642,7 @@ public class Network {
 					// Tools.displayDialog("Got message to start game (" +
 					// message + ")");
 				} else if (message.startsWith("SELECTMATCH")) {
-					game.logger.log(LogLevel.DEBUG,
-							"Got server message to select match! (" + message + ")");
+					game.logger.log(LogLevel.DEBUG, "Got server message to select match! (" + message + ")");
 					game.setPause(Pause.ALL);
 					game.sound.play("Select");
 					game.state.set(StateEnum.MATCH_SELECTION, game);
@@ -693,8 +653,7 @@ public class Network {
 					game.counter[6] = 1;
 					game.setPause(Pause.NONE);
 				} else if (message.startsWith("CLIENTDISCONNECT")) {
-					Tools.displayDialog("Uh oh! Server told us that Client \""
-							+ message.split(Client.SPLITTER)[1]
+					Tools.displayDialog("Uh oh! Server told us that Client \"" + message.split(Client.SPLITTER)[1]
 							+ "\" disconnected.\nThis is unrecoverable and requires a game restart.");
 				} else if (message.startsWith("SEEDINFO")) {
 					game.setSeed(Long.parseLong(message.split(Client.SPLITTER)[1]),
@@ -730,40 +689,32 @@ public class Network {
 			// We will be told about the bomb separately
 		} else if (message.startsWith("BOMBADD")) {
 			game.logger.log(LogLevel.DEBUG, "Adding bomb! Kaboom!");
-			Point cellPoint = new Point(Integer.parseInt(info[1]),
-					Integer.parseInt(info[2]));
+			Point cellPoint = new Point(Integer.parseInt(info[1]), Integer.parseInt(info[2]));
 			Bomb.BombType bombType = Bomb.BombType.values()[Integer.parseInt(info[3])];
 			Player playerOrigin = game.players.get(Integer.parseInt(info[4]));
 			int maxPower = Integer.parseInt(info[5]);
 			long explodeTime = Long.parseLong(info[6]);
 			long identifier = Long.parseLong(info[7]);
-			Bomb bomb = new Bomb(cellPoint, bombType, playerOrigin, game, maxPower,
-					explodeTime, identifier);
+			Bomb bomb = new Bomb(cellPoint, bombType, playerOrigin, game, maxPower, explodeTime, identifier);
 			game.objects.add(bomb);
 			game.logger.log(LogLevel.DEBUG, "Bomb added!");
 		} else if (message.startsWith("BOMBKICK")) {
 			game.logger.log(LogLevel.DEBUG, "Setting a network event for bomb kick!");
 			addNetworkEvent(NetworkEventType.BOMBKICK, Long.parseLong(info[5]), info);
 		} else if (message.startsWith("BOMBBOUNCESTOP")) {
-			game.logger.log(LogLevel.DEBUG,
-					"Setting a network event for bomb bounce stopping!");
-			addNetworkEvent(NetworkEventType.BOMBBOUNCESTOP, Long.parseLong(info[5]),
-					info);
+			game.logger.log(LogLevel.DEBUG, "Setting a network event for bomb bounce stopping!");
+			addNetworkEvent(NetworkEventType.BOMBBOUNCESTOP, Long.parseLong(info[5]), info);
 		} else if (message.startsWith("BOMBBOUNCEHEAD")) {
-			game.logger.log(LogLevel.DEBUG,
-					"Setting a network event for bomb bouncing on head!");
-			addNetworkEvent(NetworkEventType.BOMBBOUNCEHEAD, Long.parseLong(info[4]),
-					info);
+			game.logger.log(LogLevel.DEBUG, "Setting a network event for bomb bouncing on head!");
+			addNetworkEvent(NetworkEventType.BOMBBOUNCEHEAD, Long.parseLong(info[4]), info);
 		} else if (message.startsWith("BOMBTHROW")) {
 			game.logger.log(LogLevel.DEBUG, "Setting a network event for bomb throw!");
 			addNetworkEvent(NetworkEventType.BOMBTHROW, Long.parseLong(info[5]), info);
 		} else if (message.startsWith("BOMBMOVINGSTOP")) {
 			game.logger.log(LogLevel.DEBUG, "Bomb stopped moving!");
 			long identifier = Long.parseLong(info[1]);
-			Point cellPoint = new Point(Integer.parseInt(info[2]),
-					Integer.parseInt(info[3]));
-			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[4]),
-					Double.parseDouble(info[5]));
+			Point cellPoint = new Point(Integer.parseInt(info[2]), Integer.parseInt(info[3]));
+			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[4]), Double.parseDouble(info[5]));
 			Bomb bomb = talking.getBomb(identifier);
 			if (bomb != null) {
 				game.logger.log(LogLevel.DEBUG, "Bomb stopped!");
@@ -791,19 +742,16 @@ public class Network {
 		} else if (message.startsWith("BOMBPLACED")) {
 			game.logger.log(LogLevel.DEBUG, "Bomb placement!");
 			Player player = game.players.get(Integer.parseInt(info[1]));
-			Point cellPoint = new Point(Integer.parseInt(info[2]),
-					Integer.parseInt(info[3]));
+			Point cellPoint = new Point(Integer.parseInt(info[2]), Integer.parseInt(info[3]));
 			boolean fromLineBomb = Boolean.parseBoolean(info[4]);
 			long time = Long.parseLong(info[5]);
 			long identifier = Long.parseLong(info[6]);
 			int bombOrdinal = Integer.parseInt(info[7]);
-			player.layBomb(cellPoint, fromLineBomb, time, identifier,
-					BombType.values()[bombOrdinal]);
+			player.layBomb(cellPoint, fromLineBomb, time, identifier, BombType.values()[bombOrdinal]);
 		} else if (message.startsWith("BOMBJELLYKICKED")) {
 			game.logger.log(LogLevel.DEBUG, "Jelly bomb kicked!");
 			long identifier = Long.parseLong(info[1]);
-			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]),
-					Double.parseDouble(info[3]));
+			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]), Double.parseDouble(info[3]));
 			long seed = Long.parseLong(info[4]);
 			long randomCount = Long.parseLong(info[5]);
 			int direction = Integer.parseInt(info[6]);
@@ -819,8 +767,7 @@ public class Network {
 		} else if (message.startsWith("BOMBJELLYBOUNCE")) {
 			game.logger.log(LogLevel.DEBUG, "Jelly bomb bounce!");
 			long identifier = Long.parseLong(info[1]);
-			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]),
-					Double.parseDouble(info[3]));
+			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]), Double.parseDouble(info[3]));
 			long seed = Long.parseLong(info[4]);
 			long randomCount = Long.parseLong(info[5]);
 			int direction = Integer.parseInt(info[6]);
@@ -829,8 +776,7 @@ public class Network {
 				game.logger.log(LogLevel.DEBUG, "Jelly bomb bounced success!");
 				game.setSeed(seed, randomCount);
 				if (bomb.exploding || bomb.pickedUpCount < 3) {
-					game.logger.log(LogLevel.DEBUG,
-							"Wait, this bomb already landed.. don't move it!");
+					game.logger.log(LogLevel.DEBUG, "Wait, this bomb already landed.. don't move it!");
 				} else {
 					// If it's closeby probably don't need to update this as
 					// you'd
@@ -844,8 +790,7 @@ public class Network {
 				game.logger.log(LogLevel.ERROR, "Could not find jelly bomb to bounce!");
 		} else if (message.startsWith("ITEMDESTROY")) {
 			game.logger.log(LogLevel.DEBUG, "An item got destroyed!");
-			Point cellPoint = new Point(Integer.parseInt(info[1]),
-					Integer.parseInt(info[2]));
+			Point cellPoint = new Point(Integer.parseInt(info[1]), Integer.parseInt(info[2]));
 			int type = Integer.parseInt(info[3]);
 			Item item = talking.getItem(cellPoint, type);
 			if (item != null) {
@@ -855,8 +800,7 @@ public class Network {
 				game.logger.log(LogLevel.ERROR, "Could not destroy item!");
 		} else if (message.startsWith("ITEMACTIVATE")) {
 			game.logger.log(LogLevel.DEBUG, "Someone got an item!");
-			Point cellPoint = new Point(Integer.parseInt(info[1]),
-					Integer.parseInt(info[2]));
+			Point cellPoint = new Point(Integer.parseInt(info[1]), Integer.parseInt(info[2]));
 			int type = Integer.parseInt(info[3]);
 			Player player = game.players.get(Integer.parseInt(info[4]));
 			long retrievalTime = Long.parseLong(info[5]);
@@ -873,8 +817,7 @@ public class Network {
 			game.logger.log(LogLevel.DEBUG, "Player is moving!");
 			Player player = game.players.get(Integer.parseInt(info[1]));
 			player.lastButtonPress = game.currentTimeMillis();
-			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]),
-					Double.parseDouble(info[3]));
+			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]), Double.parseDouble(info[3]));
 			player.character.facing = Integer.parseInt(info[4]);
 			player.character.animation = Animation.values()[Integer.parseInt(info[5])];
 			player.exactPoint = exactPoint;
@@ -882,16 +825,14 @@ public class Network {
 			player.downPressed = Boolean.parseBoolean(info[7]);
 			player.leftPressed = Boolean.parseBoolean(info[8]);
 			player.rightPressed = Boolean.parseBoolean(info[9]);
-			if (player.upPressed || player.downPressed || player.leftPressed
-					|| player.rightPressed)
+			if (player.upPressed || player.downPressed || player.leftPressed || player.rightPressed)
 				player.moving = true;
 			game.logger.log(LogLevel.DEBUG, "Player moved.");
 		} else if (message.startsWith("PLAYERSTOPMOVE")) {
 			game.logger.log(LogLevel.DEBUG, "Player stopped moving!");
 			Player player = game.players.get(Integer.parseInt(info[1]));
 			player.lastButtonPress = game.currentTimeMillis();
-			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]),
-					Double.parseDouble(info[3]));
+			DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[2]), Double.parseDouble(info[3]));
 			player.character.facing = Integer.parseInt(info[4]);
 			player.character.animation = Animation.values()[Integer.parseInt(info[5])];
 			player.exactPoint = exactPoint;
@@ -912,16 +853,14 @@ public class Network {
 			game.logger.log(LogLevel.DEBUG, "Player infected.");
 		} else if (message.startsWith("BLOCKDESTROY")) {
 			game.logger.log(LogLevel.DEBUG, "Destroying block!");
-			Point cellPoint = new Point(Integer.parseInt(info[1]),
-					Integer.parseInt(info[2]));
+			Point cellPoint = new Point(Integer.parseInt(info[1]), Integer.parseInt(info[2]));
 			long time = Long.parseLong(info[3]);
 			Block block = Block.get(cellPoint, game);
 			if (block != null) {
 				block.destroyAt(time);
 				game.logger.log(LogLevel.DEBUG, "Block destroyed.");
 			} else {
-				game.logger.log(LogLevel.WARNING,
-						"Could not find block that was supposed to be destroyed!");
+				game.logger.log(LogLevel.WARNING, "Could not find block that was supposed to be destroyed!");
 			}
 		}
 		if (weAreHost())
@@ -966,13 +905,12 @@ public class Network {
 		 */
 		public long open = 1;
 		/**
-		 * The color of the outline of the graphic. By default a slightly opaque
-		 * green.
+		 * The color of the outline of the graphic. By default a slightly opaque green.
 		 */
 		public Color outlineColor = new Color(0, 200, 0, 200);
 		/**
-		 * The color of the background of the graphic. By default a slightly
-		 * opaque black.
+		 * The color of the background of the graphic. By default a slightly opaque
+		 * black.
 		 */
 		public Color backgroundColor = new Color(0, 0, 0, 200);
 		/**
@@ -984,8 +922,8 @@ public class Network {
 		 */
 		public boolean isMoving = false;
 		/**
-		 * The different between the upper left of the graphic and the point
-		 * that was originally clicked on, so dragging is more fluid.
+		 * The different between the upper left of the graphic and the point that was
+		 * originally clicked on, so dragging is more fluid.
 		 */
 		public Point movingOffset = null;
 		/**
@@ -1001,8 +939,8 @@ public class Network {
 		 */
 		public boolean upwards = false;
 		/**
-		 * The last game state {@link #game} was in. Used to determine when
-		 * there's a change in gamestate.
+		 * The last game state {@link #game} was in. Used to determine when there's a
+		 * change in gamestate.
 		 */
 		public State lastState = null;
 
@@ -1014,10 +952,8 @@ public class Network {
 		}
 
 		private void tick(Graphics2D g) {
-			if ((!game.state.is(StateEnum.MATCH_SELECTION)
-					&& !game.state.is(StateEnum.GOING_TO_STAGE)
-					&& !game.state.is(StateEnum.STAGE)
-					&& !game.state.is(StateEnum.END_OF_MATCH))
+			if ((!game.state.is(StateEnum.MATCH_SELECTION) && !game.state.is(StateEnum.GOING_TO_STAGE)
+					&& !game.state.is(StateEnum.STAGE) && !game.state.is(StateEnum.END_OF_MATCH))
 					|| game.fadecounterenabled != 0)
 				return;
 			if (lastState == null || !game.state.is(lastState.get())) {
@@ -1044,8 +980,7 @@ public class Network {
 
 			g.setColor(textColor);
 			g.setFont(game.defaultFont.deriveFont(10.5f));
-			String msg = (getConnectedClientAmt() > -1 ? getConnectedClientAmt() : 0)
-					+ " Connected Players";
+			String msg = (getConnectedClientAmt() > -1 ? getConnectedClientAmt() : 0) + " Connected Players";
 			int readyPlayers = 0;
 			if (weAreHost()) {
 				for (int i = 0; i < connectedClients.size(); i++)
@@ -1066,8 +1001,7 @@ public class Network {
 				img = 1;
 			if (upwards)
 				img = (img == 1) ? 2 : 1;
-			g.drawImage(game.pictures.networkingPopup.get(0).get(img), x + WIDTH - 14,
-					y + 1, game);
+			g.drawImage(game.pictures.networkingPopup.get(0).get(img), x + WIDTH - 14, y + 1, game);
 			float percent = 1;
 			if (open < 0) {
 				percent = ((float) (-open - game.currentTimeMillis()) / openTime);
@@ -1121,8 +1055,7 @@ public class Network {
 			if (open != 0)
 				return;
 			g.setColor(outlineColor);
-			g.drawLine(x + 1, y + 14 + (upwards ? -openSize : 15), x + WIDTH - 1,
-					y + 14 + (upwards ? -openSize : 15));
+			g.drawLine(x + 1, y + 14 + (upwards ? -openSize : 15), x + WIDTH - 1, y + 14 + (upwards ? -openSize : 15));
 			g.setColor(textColor);
 			g.drawString("NAME", x + 5, y + 12 + (upwards ? -openSize : 15));
 
@@ -1147,23 +1080,19 @@ public class Network {
 			g.setColor(outlineColor);
 			g.drawLine(furthestName, y + (upwards ? -openSize : 15) + 1, furthestName,
 					y + 13 + (upwards ? -openSize : 15));
-			g.drawLine(furthestName + 35, y + (upwards ? -openSize : 15) + 1,
-					furthestName + 35, y + 13 + (upwards ? -openSize : 15));
+			g.drawLine(furthestName + 35, y + (upwards ? -openSize : 15) + 1, furthestName + 35,
+					y + 13 + (upwards ? -openSize : 15));
 			for (int i = 0; i < connectedClients.size(); i++) {
 				g.setColor(textColor);
-				g.drawString(connectedClients.get(i)[0], x + 5,
-						y + 13 * (i + 2) + (upwards ? -openSize : 15));
+				g.drawString(connectedClients.get(i)[0], x + 5, y + 13 * (i + 2) + (upwards ? -openSize : 15));
 				String local = connectedClients.get(i)[1];
-				g.drawString(local,
-						furthestName - (width + 5) / 2 - Tools.getTextWidth(g, local) / 2,
+				g.drawString(local, furthestName - (width + 5) / 2 - Tools.getTextWidth(g, local) / 2,
 						y + 13 * (i + 2) + (upwards ? -openSize : 15));
 				if (server != null)
 					local = "" + server.getClientPing(connectedClients.get(i)[0]);
 				else
 					local = connectedClients.get(i)[2];
-				g.drawString(
-						local, furthestName - (width + 5) / 2
-								- Tools.getTextWidth(g, local) / 2 + 38,
+				g.drawString(local, furthestName - (width + 5) / 2 - Tools.getTextWidth(g, local) / 2 + 38,
 						y + 13 * (i + 2) + (upwards ? -openSize : 15));
 				if (server != null)
 					local = connectedClients.get(i)[2];
@@ -1196,8 +1125,7 @@ public class Network {
 				max = defaultX.length;
 			}
 			for (int i = start; i < max; i++)
-				if (Math.abs(defaultX[i] - x) <= snap
-						&& Math.abs(defaultY[i] - y) <= snap) {
+				if (Math.abs(defaultX[i] - x) <= snap && Math.abs(defaultY[i] - y) <= snap) {
 					x = defaultX[i];
 					y = defaultY[i];
 				}
@@ -1228,8 +1156,7 @@ public class Network {
 		}
 
 		/**
-		 * Sets {@link #isMoving} to <b>false</b>, so we no longer track the
-		 * mouse.
+		 * Sets {@link #isMoving} to <b>false</b>, so we no longer track the mouse.
 		 */
 		public void stopMoving() {
 			isMoving = false;
@@ -1260,8 +1187,7 @@ public class Network {
 				game.logger.log(LogLevel.DEBUG, "Bomb kick!");
 				long identifier = Long.parseLong(info[1]);
 				int direction = Integer.parseInt(info[2]);
-				DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[3]),
-						Double.parseDouble(info[4]));
+				DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[3]), Double.parseDouble(info[4]));
 				Player player = game.players.get(Integer.parseInt(info[5]));
 				Bomb bomb = talking.getBomb(identifier);
 				if (bomb != null) {
@@ -1276,8 +1202,7 @@ public class Network {
 					game.logger.log(LogLevel.ERROR, "Could not find kicked bomb!");
 			} else if (type.equals(NetworkEventType.BOMBTHROW)) {
 				game.logger.log(LogLevel.DEBUG, "Someone is throwing a bomb!");
-				DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[1]),
-						Double.parseDouble(info[2]));
+				DoublePoint exactPoint = new DoublePoint(Double.parseDouble(info[1]), Double.parseDouble(info[2]));
 				int facing = Integer.parseInt(info[3]);
 				Player player = game.players.get(Integer.parseInt(info[4]));
 				player.exactPoint = exactPoint;
@@ -1286,10 +1211,8 @@ public class Network {
 					game.logger.log(LogLevel.DEBUG, "Bomb thrown!");
 					player.pickedUpBomb.pickedUpCount = 3 + (player.character.facing * 5);
 					player.pickedUpBomb.cellPoint = player.getCellPoint();
-					DoublePoint p = new DoublePoint(
-							Stage.getExactTileMidPoint(game, player.getCellPoint()));
-					player.pickedUpBomb.exactPoint = new DoublePoint(
-							p.x + player.pickedUpBomb.adjustExactPoint.x,
+					DoublePoint p = new DoublePoint(Stage.getExactTileMidPoint(game, player.getCellPoint()));
+					player.pickedUpBomb.exactPoint = new DoublePoint(p.x + player.pickedUpBomb.adjustExactPoint.x,
 							p.y + player.pickedUpBomb.adjustExactPoint.y);
 					game.objects.add(player.pickedUpBomb);
 					player.pickedUpBomb = null;
@@ -1299,8 +1222,7 @@ public class Network {
 						player.character.animationTick = 0;
 					}
 				} else
-					game.logger.log(LogLevel.ERROR,
-							"Could not find picked up bomb to throw!");
+					game.logger.log(LogLevel.ERROR, "Could not find picked up bomb to throw!");
 			} else if (type.equals(NetworkEventType.BOMBBOUNCEHEAD)) {
 				game.logger.log(LogLevel.DEBUG, "Bomb bounced on someone's head!");
 				Player player = game.players.get(Integer.parseInt(info[1]));
@@ -1315,22 +1237,18 @@ public class Network {
 			} else if (type.equals(NetworkEventType.BOMBBOUNCESTOP)) {
 				game.logger.log(LogLevel.DEBUG, "Bomb stopped bouncing!");
 				long identifier = Long.parseLong(info[1]);
-				Point cellPoint = new Point(Integer.parseInt(info[2]),
-						Integer.parseInt(info[3]));
+				Point cellPoint = new Point(Integer.parseInt(info[2]), Integer.parseInt(info[3]));
 				long explodeTimeAdd = Long.parseLong(info[4]);
 				Bomb bomb = talking.getBomb(identifier);
 				if (bomb != null) {
-					game.logger.log(LogLevel.DEBUG,
-							"Placing down bouncing bomb for explosion!");
+					game.logger.log(LogLevel.DEBUG, "Placing down bouncing bomb for explosion!");
 					bomb.moving = -1;
 					if (bomb.explodeTime < 50000)
 						bomb.explodeTime += explodeTimeAdd;
 					bomb.pickedUpCount = -1;
 					bomb.cellPoint = cellPoint;
-					DoublePoint p = new DoublePoint(
-							Stage.getExactTileMidPoint(game, cellPoint));
-					bomb.exactPoint = new DoublePoint(p.x + bomb.adjustExactPoint.x,
-							p.y + bomb.adjustExactPoint.y);
+					DoublePoint p = new DoublePoint(Stage.getExactTileMidPoint(game, cellPoint));
+					bomb.exactPoint = new DoublePoint(p.x + bomb.adjustExactPoint.x, p.y + bomb.adjustExactPoint.y);
 				} else
 					game.logger.log(LogLevel.ERROR, "Could not find bouncing bomb!");
 			}
