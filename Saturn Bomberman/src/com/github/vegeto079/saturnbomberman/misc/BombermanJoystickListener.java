@@ -167,7 +167,7 @@ public class BombermanJoystickListener extends JoystickListener {
 				if (joystick == 0 || joystick > 1)
 					key(false, KeyEvent.VK_C);
 				else
-					key(true, KeyEvent.VK_3);
+					key(false, KeyEvent.VK_3);
 			else if (button == 2)
 				if (joystick == 0 || joystick > 1)
 					key(false, KeyEvent.VK_X);
